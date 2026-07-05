@@ -1,0 +1,49 @@
+# Local dev infra only. This does NOT containerize the backend or frontend yet —
+# during active development you want hot-reload and a debugger attached directly
+# to the processes running on your host, not rebuilding a Docker image on every
+# save. Postgres and Redis, by contrast, are "boring infra" you just want running
+# in the background with zero setup. That split (app on host, stateful infra in
+# containers) is the standard pattern and keeps the inner dev loop fast.
+#
+# Containerizing the backend/frontend for prod-like parity is a deliberate later
+# step, not an oversight.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: lol_analytics_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-lol_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme_local_only}
+      POSTGRES_DB: ${POSTGRES_DB:-lol_analytics}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-lol_admin}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: lol_analytics_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+# Named volumes (rather than bind mounts) so Postgres/Redis data survives
+# `docker compose down` and container recreation, but doesn't clutter the repo
+# or get accidentally committed. `docker compose down -v` wipes it on purpose.
+volumes:
+  postgres_data:
+  redis_data:
