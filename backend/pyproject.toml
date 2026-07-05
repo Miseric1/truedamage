@@ -1,0 +1,14 @@
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+# E: pycodestyle errors, F: pyflakes (unused imports/vars), I: import sorting,
+# UP: pyupgrade (flag old syntax patterns), B: bugbear (common footguns).
+# Kept intentionally small — a huge rule set on day one just produces noise
+# that gets ignored; add rules as they earn their keep.
+
+[tool.black]
+line-length = 100
+target-version = ["py312"]
